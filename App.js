@@ -7,13 +7,14 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StyleSheet,
+  Pressable,
 } from "react-native";
 
-const x = "x";
-const o = "o";
+const x = "X";
+const o = "O";
 
 const gameMatrix = [
-  ["x", null, null],
+  [null, null, null],
   [null, null, null],
   [null, null, null],
 ];
@@ -26,13 +27,13 @@ const generateMap = (mapData, whenPressed) => {
     const rowJsx = [];
     for (let j = 0; j < row.length; j++) {
       rowJsx.push(
-        <TouchableOpacity
+        <Pressable
           onPress={() => whenPressed(i, j)}
           style={styles.cell}
           key={`cell_${i}_${j}`}
         >
           <Text style={styles.cellText}>{mapData[i][j]}</Text>
-        </TouchableOpacity>
+        </Pressable>
       );
     }
     mapJsx.push(
@@ -45,23 +46,72 @@ const generateMap = (mapData, whenPressed) => {
   return mapJsx;
 };
 
+//The algorithm
+const getWinner = (gameStage) => {
+  let transposed = [[], [], []];
+  let diagonals = [[], []];
+  for (let i = 0; i < gameStage.length; i++) {
+    const row = gameStage[i];
+    for (let j = 0; j < row.length; j++) {
+      transposed[i][j] = gameStage[j][i];
+      if (i === j) {
+        diagonals[0][i] = gameStage[i][j];
+      }
+      if (i === Math.abs(j - (row.length - 1))) {
+        diagonals[1][i] = gameStage[i][j];
+      }
+    }
+  }
+
+  const allLines = gameStage.concat(transposed).concat(diagonals);
+  for (let i = 0; i < allLines.length; i++) {
+    const line = allLines[i];
+    const isEqual = line.every((item) => item === line[0]);
+    if (isEqual) {
+      return line[0];
+    }
+  }
+
+  return null;
+};
+
 export default function App() {
   const [gameStage, setGameStage] = useState(gameMatrix);
+  //
   const [turn, setTurn] = useState(x);
+  //
+  const [winnerSymbol, setWinnerSymbol] = useState();
+  //
   const whenPressed = (i, j) => {
+    if (winnerSymbol || gameStage[i][j]) {
+      return;
+    }
     console.log("clicked", i, j);
     const updateStage = update(gameStage, {
       [i]: {
         [j]: { $set: turn },
       },
     });
+    changeSymbol();
     setGameStage(updateStage);
+    const winner = getWinner(updateStage);
+    // // console.log(winner);
+    if (winner) {
+      setWinnerSymbol(`${winner} Won!`);
+    }
+  };
+  //
+  const changeSymbol = () => {
+    setTurn(turn === "X" ? "O" : "X");
   };
 
   return (
     <View style={styles.content}>
       <View style={styles.header}>
-        <Text>Player info goes here</Text>
+        <Text style={styles.headerText}>
+          {!winnerSymbol && `it's ${turn}'s turn`}
+        </Text>
+        <Text style={styles.headerText}>{winnerSymbol}</Text>
       </View>
 
       <View style={styles.grid}>{generateMap(gameStage, whenPressed)}</View>
@@ -79,6 +129,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     // marginBottom: 50,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: "bold",
   },
   grid: {
     flex: 6,
@@ -102,26 +156,3 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
-
-// const styles = {
-//   header: {
-//     top: 50,
-//   },
-//   row: {
-//     flexDirection: "row",
-//   },
-
-//   cell: {
-//     width: 100,
-//     height: 100,
-//     borderWidth: 1,
-//     borderColor: "black",
-//     alignItems: "center",
-//     justifyContent: "center",
-//   },
-
-//   cellText: {
-//     fontSize: 24,
-//     fontWeight: "bold",
-//   },
-// };
