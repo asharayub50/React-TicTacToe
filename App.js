@@ -98,11 +98,29 @@ export default function App() {
     // // console.log(winner);
     if (winner) {
       setWinnerSymbol(`${winner} Won!`);
+    } else if (!hasSpace(updateStage)) {
+      setWinnerSymbol("Draw");
     }
   };
   //
   const changeSymbol = () => {
     setTurn(turn === "X" ? "O" : "X");
+  };
+  //to check if there is space on the grid
+  const hasSpace = (inputArray) => {
+    let hasSpace = false;
+    for (let i = 0; i < inputArray.length; i++) {
+      for (let j = 0; j < inputArray[i].length; j++) {
+        if (inputArray[i][j] === null) {
+          hasSpace = true;
+        }
+      }
+    }
+    if (hasSpace) {
+      console.log("has space");
+    }
+
+    return hasSpace;
   };
 
   return (
@@ -112,6 +130,17 @@ export default function App() {
           {!winnerSymbol && `it's ${turn}'s turn`}
         </Text>
         <Text style={styles.headerText}>{winnerSymbol}</Text>
+        {winnerSymbol && (
+          <Pressable
+            onPress={() => {
+              setGameStage(gameMatrix);
+              setTurn(x);
+              setWinnerSymbol(undefined);
+            }}
+          >
+            <Text style={styles.headerText}>Restart</Text>
+          </Pressable>
+        )}
       </View>
 
       <View style={styles.grid}>{generateMap(gameStage, whenPressed)}</View>
